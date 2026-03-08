@@ -99,6 +99,19 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--adapter-path", type=str, default=OUTPUT_DIR)
     parser.add_argument("--num-test-samples", type=int, default=200)
+    parser.add_argument(
+        "--model-type",
+        type=str,
+        choices=["lora", "galore"],
+        help="Shortcut: 'lora' for standard LoRA, 'galore' for GaLore-optimized"
+    )
     args = parser.parse_args()
+    
+    # Handle model-type shortcut
+    if args.model_type:
+        if args.model_type == "lora":
+            args.adapter_path = "output/llama32-1b-lora-c4"
+        elif args.model_type == "galore":
+            args.adapter_path = "output/llama32-1b-lora-galore-c4"
     
     evaluate_model(args.adapter_path, args.num_test_samples)

@@ -50,3 +50,17 @@ FP16 = False
 
 # --- Quantization (saves VRAM; set False if you have 16GB+ GPU) ---
 LOAD_IN_4BIT = True
+
+# --- Advanced Optimization ---
+# Use low-rank optimizer that compresses optimizer states (momentum, variance)
+# Standard: stores O(m×n) optimizer states
+# LowRank: stores O((m+n)×r) optimizer states where r << min(m,n)
+USE_LOWRANK_OPTIMIZER = False  # Set True for additional memory savings
+LOWRANK_OPTIMIZER_RANK = 128
+LOWRANK_PROJECTION_FREQ = 100  # Update projection matrices every N steps
+
+# Auto-adjust output directory based on optimizer choice
+if USE_LOWRANK_OPTIMIZER:
+    OUTPUT_DIR = "output/llama32-1b-lora-galore-c4"
+else:
+    OUTPUT_DIR = "output/llama32-1b-lora-c4"

@@ -62,6 +62,27 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--prompt", type=str, default="The capital of France is")
     parser.add_argument("--max-new-tokens", type=int, default=128)
-    parser.add_argument("--adapter-path", type=str, default=OUTPUT_DIR)
+    parser.add_argument(
+        "--adapter-path", 
+        type=str, 
+        default=OUTPUT_DIR,
+        help="Path to LoRA adapter. Use 'output/llama32-1b-lora-c4' for standard LoRA or 'output/llama32-1b-lora-galore-c4' for GaLore"
+    )
+    parser.add_argument(
+        "--model-type",
+        type=str,
+        choices=["lora", "galore"],
+        help="Shortcut: 'lora' loads standard LoRA model, 'galore' loads GaLore-optimized model"
+    )
     args = parser.parse_args()
+    
+    # Handle model-type shortcut
+    if args.model_type:
+        if args.model_type == "lora":
+            args.adapter_path = "output/llama32-1b-lora-c4"
+            print(f"Loading standard LoRA model from: {args.adapter_path}")
+        elif args.model_type == "galore":
+            args.adapter_path = "output/llama32-1b-lora-galore-c4"
+            print(f"Loading GaLore-optimized model from: {args.adapter_path}")
+    
     print(generate(args.prompt, args.max_new_tokens, args.adapter_path))

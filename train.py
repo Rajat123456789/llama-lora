@@ -5,6 +5,7 @@ Uses PEFT (LoRA) + TRL SFTTrainer. C4 is used as continuous text for
 causal language modeling (next-token prediction).
 """
 
+import os
 import torch
 from transformers import (
     AutoModelForCausalLM,
@@ -36,6 +37,16 @@ from config import (
     get_device,
     configure_mps,
 )
+
+# Memory tracking
+from memory_tracking import MemoryTrackingCallback
+
+# Optional: Low-rank optimizer for additional memory savings
+try:
+    from config import USE_LOWRANK_OPTIMIZER, LOWRANK_OPTIMIZER_RANK, LOWRANK_PROJECTION_FREQ
+    from lowrank_optimizer import LowRankAdamW
+except ImportError:
+    USE_LOWRANK_OPTIMIZER = False
 
 
 def main():
@@ -117,12 +128,29 @@ def main():
         dataloader_pin_memory=(device != "mps"),  # MPS doesn't support pin_memory
     )
 
+    # Optional: Use low-rank optimizer for additional memory savings
+    optimizers = (None, None)  # Default: let Trainer create optimizer
+    if USE_LOWRANK_OPTIMIZER:
+        print(f"Using LowRankAdamW optimizer (rank={LOWRANK_OPTIMIZER_RANK})")
+        optimizer = LowRankAdamW(
+            [p for p in model.parameters() if p.requires_grad],
+            lr=LEARNING_RATE,
+            rank=LOWRANK_OPTIMIZER_RANK,
+            projection_update_freq=LOWRANK_PROJECTION_FREQ,
+        )
+        optimizers = (optimizer, None)
+
+    # Memory tracking callback
+    memory_callback = MemoryTrackingCallback(device=device, log_every_n_steps=10)
+
     # SFTTrainer with text field (causal LM on C4)
     trainer = SFTTrainer(
         model=model,
         args=sft_config,
         train_dataset=train_dataset,
         processing_class=tokenizer,
+        optimizers=optimizers,
+        callbacks=[memory_callback],
     )
 
     print("Starting training...")
@@ -130,6 +158,13 @@ def main():
     trainer.save_model(OUTPUT_DIR)
     tokenizer.save_pretrained(OUTPUT_DIR)
     print(f"Saved LoRA adapter and tokenizer to {OUTPUT_DIR}")
+    
+    # Generate memory visualization
+    print("\nGenerating memory usage plot...")
+    from memory_tracking import visualize_memory_tracking
+    memory_json_path = os.path.join(OUTPUT_DIR, "memory_tracking.json")
+    if os.path.exists(memory_json_path):
+        visualize_memory_tracking(memory_json_path)
 
 
 if __name__ == "__main__":
