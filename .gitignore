@@ -1,0 +1,21 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# Outputs
+output/
+
+# Hugging Face
+.cache/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+.env
+.env.local

@@ -1,0 +1,15 @@
+# Core
+torch>=2.1.0
+transformers>=4.40.0
+accelerate>=0.27.0
+datasets>=2.18.0
+
+# LoRA & training
+peft>=0.10.0
+trl>=0.8.0
+bitsandbytes>=0.43.0
+
+# Utilities
+tqdm>=4.66.0
+sentencepiece>=0.2.0
+protobuf>=3.20.0
